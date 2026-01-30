@@ -205,7 +205,7 @@ When called with `{ "id": 123 }`, it makes a `GET` request to `/users/123`.
 
 ## Requirements
 
-- .NET 9.0 or later
+- .NET 8.0 or later
 - [ModelContextProtocol](https://www.nuget.org/packages/ModelContextProtocol) 0.5.0-preview.1 or later
 - [Microsoft.OpenApi.Readers](https://www.nuget.org/packages/Microsoft.OpenApi.Readers) 1.6.28 or later
 
