@@ -173,15 +173,18 @@ public class McpServerClientTests : IClassFixture<WebApplicationFactory<Program>
         var client = serverAndClient.Client;
 
         var tools = await client.ListToolsAsync();
-        var getUserByIdTool = tools.FirstOrDefault(t =>
-            t.Name.Equals("GetUserById", StringComparison.OrdinalIgnoreCase) ||
-            (t.Name.Contains("User", StringComparison.OrdinalIgnoreCase) &&
+        
+        // The method is named "GetUser" in the controller (not "GetUserById")
+        var getUserTool = tools.FirstOrDefault(t =>
+            t.Name.Equals("GetUser", StringComparison.OrdinalIgnoreCase) ||
+            (t.Name.Contains("get", StringComparison.OrdinalIgnoreCase) &&
+             t.Name.Contains("user", StringComparison.OrdinalIgnoreCase) &&
              t.Name.Contains("id", StringComparison.OrdinalIgnoreCase)));
 
-        Assert.NotNull(getUserByIdTool);
+        Assert.NotNull(getUserTool);
 
         // Act
-        var result = await client.CallToolAsync(getUserByIdTool.Name, new Dictionary<string, object?>
+        var result = await client.CallToolAsync(getUserTool.Name, new Dictionary<string, object?>
         {
             ["id"] = 99999
         });
@@ -206,17 +209,20 @@ public class McpServerClientTests : IClassFixture<WebApplicationFactory<Program>
 
         // Act
         var tools = await client.ListToolsAsync();
-        var getUserByIdTool = tools.FirstOrDefault(t =>
-            t.Name.Equals("GetUserById", StringComparison.OrdinalIgnoreCase) ||
-            (t.Name.Contains("User", StringComparison.OrdinalIgnoreCase) &&
+        
+        // The method is named "GetUser" in the controller (not "GetUserById")
+        var getUserTool = tools.FirstOrDefault(t =>
+            t.Name.Equals("GetUser", StringComparison.OrdinalIgnoreCase) ||
+            (t.Name.Contains("get", StringComparison.OrdinalIgnoreCase) &&
+             t.Name.Contains("user", StringComparison.OrdinalIgnoreCase) &&
              t.Name.Contains("id", StringComparison.OrdinalIgnoreCase)));
 
-        Assert.NotNull(getUserByIdTool);
+        Assert.NotNull(getUserTool);
 
         // Assert - use JsonSchema property instead of InputSchema
-        Assert.Equal("object", getUserByIdTool.JsonSchema.GetProperty("type").GetString());
+        Assert.Equal("object", getUserTool.JsonSchema.GetProperty("type").GetString());
         
-        var properties = getUserByIdTool.JsonSchema.GetProperty("properties");
+        var properties = getUserTool.JsonSchema.GetProperty("properties");
         Assert.True(properties.TryGetProperty("id", out var idProp));
         Assert.Equal("integer", idProp.GetProperty("type").GetString());
     }
