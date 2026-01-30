@@ -6,6 +6,9 @@ using Microsoft.OpenApi.Models;
 
 namespace OpenApiMcpNet;
 
+/// <summary>
+/// Default implementation of <see cref="IWebApiCaller"/> that makes HTTP requests to web APIs.
+/// </summary>
 public class WebApiCaller : IWebApiCaller
 {
     private readonly HttpClient _httpClient;
@@ -27,6 +30,7 @@ public class WebApiCaller : IWebApiCaller
         _logger = logger;
     }
 
+    /// <inheritdoc/>
     public async Task<JsonElement> CallApiAsync(WebApiMetadata apiMetadata, IDictionary<string, JsonElement> parameters, CancellationToken cancellationToken)
     {
         var operation = apiMetadata.Operation;

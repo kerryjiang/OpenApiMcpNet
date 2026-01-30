@@ -13,8 +13,8 @@ public class NoOpAuthenticationHandler : IAuthenticationHandler
     /// </summary>
     public static readonly NoOpAuthenticationHandler Instance = new();
 
+    /// <inheritdoc/>
     public bool IsAuthenticated => true;
-
 
     /// <inheritdoc/>
     public Task AuthenticateAsync()
@@ -23,6 +23,7 @@ public class NoOpAuthenticationHandler : IAuthenticationHandler
         return Task.CompletedTask;
     }
 
+    /// <inheritdoc/>
     public void AuthenticateRequest(HttpRequestMessage request, IEnumerable<KeyValuePair<string, string>> queryParameters, IEnumerable<KeyValuePair<string, JsonElement>> bodyParameters)
     {
         // No-op: does nothing

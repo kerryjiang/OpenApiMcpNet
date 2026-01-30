@@ -16,6 +16,8 @@ public class OAuth2AuthenticationHandler : IAuthenticationHandler
     private readonly string _consumerSecret;
     private readonly string? _scope;
     private string? _accessToken;
+
+    /// <inheritdoc/>
     public bool IsAuthenticated { get; private set; } = false;
 
     /// <summary>
@@ -100,6 +102,7 @@ public class OAuth2AuthenticationHandler : IAuthenticationHandler
         return accessToken;
     }
 
+    /// <inheritdoc/>
     public void AuthenticateRequest(HttpRequestMessage request, IEnumerable<KeyValuePair<string, string>> queryParameters, IEnumerable<KeyValuePair<string, JsonElement>> bodyParameters)
     {
         if (!IsAuthenticated)

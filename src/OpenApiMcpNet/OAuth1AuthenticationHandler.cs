@@ -20,6 +20,8 @@ public class OAuth1AuthenticationHandler : IAuthenticationHandler
     private string? _accessToken;
     private string? _accessTokenSecret;
     private readonly string _signatureMethod;
+
+    /// <inheritdoc/>
     public bool IsAuthenticated { get; private set; } = false;
 
     protected const string KeyOAuthVersion = "1.0";

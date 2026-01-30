@@ -7,6 +7,9 @@ using ModelContextProtocol.Server;
 
 namespace OpenApiMcpNet;
 
+/// <summary>
+/// Provides extension methods for integrating OpenAPI specifications with MCP servers.
+/// </summary>
 public static class Extensions
 {
     /// <summary>
