@@ -35,5 +35,5 @@ jobs:
               run: dotnet build -c Release
             - name: Test
               run: |
-                cd test/OpenApiMcpNet.Tests
+                cd tests/OpenApiMcpNet.Tests
                 dotnet test --logger "console;verbosity=detailed"
