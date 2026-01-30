@@ -1,5 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+  <PropertyGroup>
+    <PackageId>OpenApiMcpNet</PackageId>
+    <Description>A .NET library for generating MCP (Model Context Protocol) definitions from OpenAPI specifications.</Description>
+    <PackageTags>OpenAPI;MCP;Model Context Protocol;API;Code Generation</PackageTags>
+  </PropertyGroup>
+
   <ItemGroup>
     <InternalsVisibleTo Include="OpenApiMcpNet.Tests" />
   </ItemGroup>
