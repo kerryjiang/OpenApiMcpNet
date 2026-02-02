@@ -137,7 +137,7 @@ public class WebApiCaller : IWebApiCaller
         // Authenticate the request
         _authenticationHandler.AuthenticateRequest(request, queryParams, bodyParams);
 
-        _logger.LogInformation("Sending {Method} request to {Url}: {Headers}", httpMethod, url, string.Join(", ", request.Headers.Select(h => $"{h.Key}: {string.Join(", ", h.Value)}")));
+        _logger.LogInformation("Sending {Method} request to {Url}", httpMethod, url);
 
         // Send the request
         var response = await _httpClient.SendAsync(request, cancellationToken);
