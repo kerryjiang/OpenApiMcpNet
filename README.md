@@ -1,5 +1,9 @@
 # OpenApiMcpNet
 
+[![build](https://github.com/kerryjiang/OpenApiMcpNet/actions/workflows/build.yml/badge.svg)](https://github.com/kerryjiang/OpenApiMcpNet/actions/workflows/build.yml)
+[![NuGet Version](https://img.shields.io/nuget/v/OpenApiMcpNet)](https://www.nuget.org/packages/OpenApiMcpNet)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/OpenApiMcpNet)](https://www.nuget.org/packages/OpenApiMcpNet)
+
 A .NET library that automatically generates [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) tools from OpenAPI specifications. This allows AI assistants and LLMs to interact with any REST API that has an OpenAPI (Swagger) specification.
 
 ## Features
