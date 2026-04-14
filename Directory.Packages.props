@@ -3,7 +3,7 @@
   <ItemGroup>
     <!-- Main dependencies -->
     <PackageVersion Include="Microsoft.OpenApi.Readers" Version="1.6.28" />
-    <PackageVersion Include="ModelContextProtocol" Version="0.5.0-preview.1" />
+    <PackageVersion Include="ModelContextProtocol" Version="1.2.0" />
 
     <!-- ASP.NET Core -->
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="7.2.0" />
