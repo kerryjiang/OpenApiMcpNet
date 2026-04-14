@@ -294,6 +294,106 @@ public class WebApiCallerTests
         Assert.True(result.GetProperty("success").GetBoolean());
         Assert.Equal(204, result.GetProperty("statusCode").GetInt32());
     }
+
+    [Fact]
+    public async Task CallApiAsync_Get_WithEnumQueryParameter_AppendsCorrectValue()
+    {
+        // Arrange
+        string? capturedUrl = null;
+        var handlerMock = new MockHttpMessageHandler(req =>
+        {
+            capturedUrl = req.RequestUri?.ToString();
+            return new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+            {
+                Content = new StringContent("[]", System.Text.Encoding.UTF8, "application/json")
+            };
+        });
+
+        var httpClient = new HttpClient(handlerMock);
+        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+        var webApiCaller = new WebApiCaller(httpClient, new NoOpAuthenticationHandler(), loggerFactory.CreateLogger<WebApiCaller>());
+
+        var operation = new OpenApiOperation
+        {
+            Parameters = new List<OpenApiParameter>
+            {
+                new OpenApiParameter
+                {
+                    Name = "userType",
+                    In = ParameterLocation.Query,
+                    Schema = new OpenApiSchema
+                    {
+                        Type = "string",
+                        Enum = new List<Microsoft.OpenApi.Any.IOpenApiAny>
+                        {
+                            new Microsoft.OpenApi.Any.OpenApiString("Admin"),
+                            new Microsoft.OpenApi.Any.OpenApiString("Regular"),
+                            new Microsoft.OpenApi.Any.OpenApiString("Guest")
+                        }
+                    }
+                }
+            }
+        };
+
+        var metadata = new WebApiMetadata(
+            "https://api.example.com",
+            "/users/bytype",
+            OperationType.Get,
+            operation);
+
+        var parameters = new Dictionary<string, JsonElement>
+        {
+            ["userType"] = JsonSerializer.SerializeToElement("Admin")
+        };
+
+        // Act
+        await webApiCaller.CallApiAsync(metadata, parameters, CancellationToken.None);
+
+        // Assert
+        Assert.Contains("userType=Admin", capturedUrl);
+    }
+
+    [Fact]
+    public async Task CallApiAsync_Post_WithEnumInBody_SendsCorrectValue()
+    {
+        // Arrange
+        string? capturedBody = null;
+        var handlerMock = new MockHttpMessageHandler(async req =>
+        {
+            capturedBody = await req.Content!.ReadAsStringAsync();
+            return new HttpResponseMessage(System.Net.HttpStatusCode.Created)
+            {
+                Content = new StringContent("{\"id\":1,\"name\":\"Test\",\"userType\":\"Admin\"}", System.Text.Encoding.UTF8, "application/json")
+            };
+        });
+
+        var httpClient = new HttpClient(handlerMock);
+        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+        var webApiCaller = new WebApiCaller(httpClient, new NoOpAuthenticationHandler(), loggerFactory.CreateLogger<WebApiCaller>());
+
+        var metadata = new WebApiMetadata(
+            "https://api.example.com",
+            "/users",
+            OperationType.Post,
+            new OpenApiOperation());
+
+        var parameters = new Dictionary<string, JsonElement>
+        {
+            ["name"] = JsonSerializer.SerializeToElement("Test"),
+            ["email"] = JsonSerializer.SerializeToElement("test@example.com"),
+            ["userType"] = JsonSerializer.SerializeToElement("Admin")
+        };
+
+        // Act
+        await webApiCaller.CallApiAsync(metadata, parameters, CancellationToken.None);
+
+        // Assert
+        Assert.NotNull(capturedBody);
+        var bodyJson = JsonSerializer.Deserialize<JsonElement>(capturedBody);
+        Assert.Equal("Test", bodyJson.GetProperty("name").GetString());
+        Assert.Equal("test@example.com", bodyJson.GetProperty("email").GetString());
+        Assert.Equal("Admin", bodyJson.GetProperty("userType").GetString());
+    }
 }
 
 /// <summary>

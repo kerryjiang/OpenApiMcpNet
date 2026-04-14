@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace OpenApiMcpNet.TestApi.Controllers;
@@ -8,9 +9,9 @@ public class UsersController : ControllerBase
 {
     private static readonly List<User> _users = new()
     {
-        new User { Id = 1, Name = "Alice", Email = "alice@example.com" },
-        new User { Id = 2, Name = "Bob", Email = "bob@example.com" },
-        new User { Id = 3, Name = "Charlie", Email = "charlie@example.com" }
+        new User { Id = 1, Name = "Alice", Email = "alice@example.com", UserType = UserType.Admin },
+        new User { Id = 2, Name = "Bob", Email = "bob@example.com", UserType = UserType.Regular },
+        new User { Id = 3, Name = "Charlie", Email = "charlie@example.com", UserType = UserType.Guest }
     };
 
     /// <summary>
@@ -59,6 +60,20 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
+    /// Searches for users by user type
+    /// </summary>
+    /// <param name="userType">The user type to filter by</param>
+    /// <returns>Matching users</returns>
+    [HttpGet("bytype")]
+    [ProducesResponseType(typeof(IEnumerable<User>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public ActionResult<IEnumerable<User>> SearchUsersByType([FromQuery] UserType userType)
+    {
+        var results = _users.Where(u => u.UserType == userType);
+        return Ok(results);
+    }
+
+    /// <summary>
     /// Creates a new user
     /// </summary>
     /// <param name="request">The user creation request</param>
@@ -72,7 +87,8 @@ public class UsersController : ControllerBase
         {
             Id = _users.Max(u => u.Id) + 1,
             Name = request.Name,
-            Email = request.Email
+            Email = request.Email,
+            UserType = request.UserType
         };
         _users.Add(newUser);
         return CreatedAtAction(nameof(GetUser), new { id = newUser.Id }, newUser);
@@ -103,6 +119,10 @@ public class UsersController : ControllerBase
         {
             user.Email = request.Email;
         }
+        if (request.UserType.HasValue)
+        {
+            user.UserType = request.UserType.Value;
+        }
 
         return Ok(user);
     }
@@ -127,21 +147,35 @@ public class UsersController : ControllerBase
     }
 }
 
+/// <summary>
+/// Represents the type of a user
+/// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum UserType
+{
+    Admin,
+    Regular,
+    Guest
+}
+
 public class User
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
+    public UserType UserType { get; set; }
 }
 
 public class CreateUserRequest
 {
     public string Name { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
+    public UserType UserType { get; set; } = UserType.Regular;
 }
 
 public class UpdateUserRequest
 {
     public string? Name { get; set; }
     public string? Email { get; set; }
+    public UserType? UserType { get; set; }
 }

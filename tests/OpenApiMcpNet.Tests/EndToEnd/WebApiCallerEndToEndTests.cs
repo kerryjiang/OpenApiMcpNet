@@ -162,6 +162,83 @@ public class WebApiCallerEndToEndTests : IClassFixture<WebApplicationFactory<Pro
         Assert.Contains("404", exception.Message);
     }
 
+    [Fact]
+    public async Task CallApiAsync_SearchUsersByType_ReturnsFilteredResults()
+    {
+        // Arrange
+        var openApiSpec = await GetOpenApiSpecAsync();
+        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+        var webApiCaller = new WebApiCaller(_httpClient, new NoOpAuthenticationHandler(), loggerFactory.CreateLogger<WebApiCaller>());
+
+        var metadata = CreateMetadataFromSpec(openApiSpec, "/api/Users/bytype", "get");
+        var parameters = new Dictionary<string, JsonElement>
+        {
+            ["userType"] = JsonSerializer.SerializeToElement("Admin")
+        };
+
+        // Act
+        var result = await webApiCaller.CallApiAsync(metadata, parameters, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(JsonValueKind.Array, result.ValueKind);
+        Assert.True(result.GetArrayLength() >= 1);
+
+        foreach (var user in result.EnumerateArray())
+        {
+            Assert.Equal("Admin", user.GetProperty("userType").GetString());
+        }
+    }
+
+    [Fact]
+    public async Task CallApiAsync_GetAllUsers_ReturnsUsersWithUserType()
+    {
+        // Arrange
+        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+        var openApiSpec = await GetOpenApiSpecAsync();
+        var webApiCaller = new WebApiCaller(_httpClient, new NoOpAuthenticationHandler(), loggerFactory.CreateLogger<WebApiCaller>());
+
+        var metadata = CreateMetadataFromSpec(openApiSpec, "/api/Users", "get");
+
+        // Act
+        var result = await webApiCaller.CallApiAsync(metadata, new Dictionary<string, JsonElement>(), CancellationToken.None);
+
+        // Assert
+        Assert.Equal(JsonValueKind.Array, result.ValueKind);
+        Assert.True(result.GetArrayLength() > 0);
+
+        foreach (var user in result.EnumerateArray())
+        {
+            Assert.True(user.TryGetProperty("userType", out var userTypeProp));
+            var userTypeValue = userTypeProp.GetString();
+            Assert.Contains(userTypeValue, new[] { "Admin", "Regular", "Guest" });
+        }
+    }
+
+    [Fact]
+    public async Task CallApiAsync_CreateUser_WithEnumField_ReturnsCreatedUser()
+    {
+        // Arrange
+        var openApiSpec = await GetOpenApiSpecAsync();
+        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+        var webApiCaller = new WebApiCaller(_httpClient, new NoOpAuthenticationHandler(), loggerFactory.CreateLogger<WebApiCaller>());
+
+        var metadata = CreateMetadataFromSpec(openApiSpec, "/api/Users", "post");
+        var parameters = new Dictionary<string, JsonElement>
+        {
+            ["name"] = JsonSerializer.SerializeToElement("EnumTestUser"),
+            ["email"] = JsonSerializer.SerializeToElement("enumtest@example.com"),
+            ["userType"] = JsonSerializer.SerializeToElement("Guest")
+        };
+
+        // Act
+        var result = await webApiCaller.CallApiAsync(metadata, parameters, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(JsonValueKind.Object, result.ValueKind);
+        Assert.Equal("EnumTestUser", result.GetProperty("name").GetString());
+        Assert.Equal("Guest", result.GetProperty("userType").GetString());
+    }
+
     private async Task<Microsoft.OpenApi.Models.OpenApiDocument> GetOpenApiSpecAsync()
     {
         var response = await _httpClient.GetAsync("/swagger/v1/swagger.json");

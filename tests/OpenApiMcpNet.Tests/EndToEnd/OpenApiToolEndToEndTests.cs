@@ -199,6 +199,112 @@ public class OpenApiToolEndToEndTests : IClassFixture<WebApplicationFactory<Prog
         Assert.Equal("GET", toolMetadata["method"]);
     }
 
+    [Fact]
+    public async Task OpenApiTool_SearchUsersByType_ExecutesSuccessfully()
+    {
+        // Arrange
+        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+        var openApiSpec = await GetOpenApiSpecAsync();
+        var webApiCaller = new WebApiCaller(_httpClient, new NoOpAuthenticationHandler(), loggerFactory.CreateLogger<WebApiCaller>());
+        var baseUrl = _httpClient.BaseAddress?.ToString().TrimEnd('/') ?? "http://localhost";
+
+        var pathItem = openApiSpec.Paths["/api/Users/bytype"];
+        var operation = pathItem.Operations[OperationType.Get];
+        var metadata = new WebApiMetadata(baseUrl, "/api/Users/bytype", OperationType.Get, operation);
+
+        var tool = new OpenApiTool("searchUsersByType", "Search users by type", metadata, webApiCaller, loggerFactory.CreateLogger<OpenApiTool>());
+
+        var arguments = new Dictionary<string, JsonElement>
+        {
+            ["userType"] = JsonSerializer.SerializeToElement("Admin")
+        };
+
+        // Act
+        var result = await tool.InvokeAsync(arguments, CancellationToken.None);
+
+        // Assert
+        Assert.NotEqual(true, result.IsError);
+        Assert.Single(result.Content);
+
+        var textContent = result.Content.First() as TextContentBlock;
+        Assert.NotNull(textContent);
+
+        var users = JsonSerializer.Deserialize<JsonElement>(textContent.Text);
+        Assert.Equal(JsonValueKind.Array, users.ValueKind);
+        Assert.True(users.GetArrayLength() >= 1);
+
+        foreach (var user in users.EnumerateArray())
+        {
+            Assert.Equal("Admin", user.GetProperty("userType").GetString());
+        }
+    }
+
+    [Fact]
+    public async Task OpenApiTool_SearchUsersByType_HasEnumInInputSchema()
+    {
+        // Arrange
+        var openApiSpec = await GetOpenApiSpecAsync();
+        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+        var webApiCaller = new WebApiCaller(_httpClient, new NoOpAuthenticationHandler(), loggerFactory.CreateLogger<WebApiCaller>());
+        var baseUrl = _httpClient.BaseAddress?.ToString().TrimEnd('/') ?? "http://localhost";
+
+        var pathItem = openApiSpec.Paths["/api/Users/bytype"];
+        var operation = pathItem.Operations[OperationType.Get];
+        var metadata = new WebApiMetadata(baseUrl, "/api/Users/bytype", OperationType.Get, operation);
+
+        var tool = new OpenApiTool("searchUsersByType", "Search users by type", metadata, webApiCaller, loggerFactory.CreateLogger<OpenApiTool>());
+
+        // Act
+        var inputSchema = tool.ProtocolTool.InputSchema;
+
+        // Assert
+        var properties = inputSchema.GetProperty("properties");
+        Assert.True(properties.TryGetProperty("userType", out var userTypeProp));
+
+        // Verify the enum values are present and correctly extracted
+        Assert.True(userTypeProp.TryGetProperty("enum", out var enumValues));
+        var enumList = enumValues.EnumerateArray().Select(e => e.GetString()).ToList();
+        Assert.Contains("Admin", enumList);
+        Assert.Contains("Regular", enumList);
+        Assert.Contains("Guest", enumList);
+    }
+
+    [Fact]
+    public async Task OpenApiTool_CreateUserWithType_ExecutesSuccessfully()
+    {
+        // Arrange
+        var openApiSpec = await GetOpenApiSpecAsync();
+        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+        var webApiCaller = new WebApiCaller(_httpClient, new NoOpAuthenticationHandler(), loggerFactory.CreateLogger<WebApiCaller>());
+        var baseUrl = _httpClient.BaseAddress?.ToString().TrimEnd('/') ?? "http://localhost";
+
+        var pathItem = openApiSpec.Paths["/api/Users"];
+        var operation = pathItem.Operations[OperationType.Post];
+        var metadata = new WebApiMetadata(baseUrl, "/api/Users", OperationType.Post, operation);
+
+        var tool = new OpenApiTool("createUser", "Create a new user", metadata, webApiCaller, loggerFactory.CreateLogger<OpenApiTool>());
+
+        var arguments = new Dictionary<string, JsonElement>
+        {
+            ["name"] = JsonSerializer.SerializeToElement("TypedUser"),
+            ["email"] = JsonSerializer.SerializeToElement("typed@example.com"),
+            ["userType"] = JsonSerializer.SerializeToElement("Guest")
+        };
+
+        // Act
+        var result = await tool.InvokeAsync(arguments, CancellationToken.None);
+
+        // Assert
+        Assert.NotEqual(true, result.IsError);
+
+        var textContent = result.Content.First() as TextContentBlock;
+        Assert.NotNull(textContent);
+
+        var user = JsonSerializer.Deserialize<JsonElement>(textContent.Text);
+        Assert.Equal("TypedUser", user.GetProperty("name").GetString());
+        Assert.Equal("Guest", user.GetProperty("userType").GetString());
+    }
+
     private async Task<OpenApiDocument> GetOpenApiSpecAsync()
     {
         var response = await _httpClient.GetAsync("/swagger/v1/swagger.json");

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using ModelContextProtocol.Server;
 using ModelContextProtocol.Protocol;
@@ -261,7 +262,7 @@ internal class OpenApiTool : McpServerTool
         // Handle enum values
         if (openApiSchema.Enum?.Count > 0)
         {
-            schema["enum"] = new JsonArray(openApiSchema.Enum.Select(e => JsonValue.Create(e.ToString())).ToArray()!);
+            schema["enum"] = new JsonArray(openApiSchema.Enum.Select(e => ConvertOpenApiAnyToJsonNode(e)).ToArray()!);
         }
 
         // Handle array items
@@ -319,5 +320,19 @@ internal class OpenApiTool : McpServerTool
         }
 
         return schema;
+    }
+
+    private static JsonNode? ConvertOpenApiAnyToJsonNode(IOpenApiAny openApiAny)
+    {
+        return openApiAny switch
+        {
+            OpenApiString s => JsonValue.Create(s.Value),
+            OpenApiInteger i => JsonValue.Create(i.Value),
+            OpenApiLong l => JsonValue.Create(l.Value),
+            OpenApiFloat f => JsonValue.Create(f.Value),
+            OpenApiDouble d => JsonValue.Create(d.Value),
+            OpenApiBoolean b => JsonValue.Create(b.Value),
+            _ => JsonValue.Create(openApiAny.ToString())
+        };
     }
 }
